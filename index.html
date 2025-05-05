@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tienda futurista de smartphones con animaciones avanzadas, diseño neón y 32 productos.">
+  <title>Futuristic Smartphone Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: #0a0a1a;
+      color: #e0e0e0;
+      overflow-x: hidden;
+      margin: 0;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.3;
+    }
+    .theme-classic {
+      background: linear-gradient(to bottom, #f3f4f6, #d1d5db);
+      color: #1f2937;
+    }
+    .theme-classic header, .theme-classic footer {
+      background: #ffffff;
+      color: #1f2937;
+    }
+    .theme-classic .bg-dark {
+      background: #ffffff;
+      color: #1f2937;
+    }
+    .theme-classic .text-neon {
+      color: #1f2937;
+      text-shadow: none;
+    }
+    .theme-classic .filter-btn {
+      background: #e5e7eb;
+    }
+    .theme-classic .filter-btn:hover {
+      background: #d1d5db;
+    }
+    .theme-classic .border-neon {
+      border-color: #d1d5db;
+    }
+    .theme-classic .hover\:glow:hover {
+      box-shadow: none;
+      transform: scale(1.05);
+    }
+    .text-neon {
+      color: #00f7ff;
+      text-shadow: 0 0 5px #00f7ff, 0 0 10px #00f7ff, 0 0 20px #ff00ff;
+    }
+    .text-neon-magenta {
+      color: #ff00ff;
+      text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #00f7ff;
+    }
+    .border-neon {
+      border: 1px solid #00f7ff;
+      box-shadow: 0 0 10px #00f7ff;
+    }
+    .hover\:glow:hover {
+      box-shadow: 0 0 15px #00f7ff, 0 0 30px #ff00ff;
+      transform: scale(1.05) rotate(2deg);
+    }
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+    .dropdown-menu {
+      display: none;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      background: #1a1a2e;
+      border: 1px solid #00f7ff;
+      box-shadow: 0 0 15px #00f7ff;
+    }
+    .dropdown:hover .dropdown-menu {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .product-card {
+      animation: fadeInScale 0.8s ease-out forwards;
+      opacity: 0;
+      transition: all 0.5s ease;
+      position: relative;
+      background: #1a1a2e;
+      border: 1px solid #00f7ff;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.9) translateY(30px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .product-card:hover {
+      transform: translateY(-10px) rotateX(5deg);
+      box-shadow: 0 0 20px #00f7ff, 0 0 40px #ff00ff;
+    }
+    .badge {
+      position: absolute;
+      top: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-discount {
+      background: #ff00ff;
+      color: #0a0a1a;
+      left: 0.5rem;
+    }
+    .badge-stock {
+      right: 0.5rem;
+    }
+    .badge-stock.in-stock {
+      background: #00f7ff;
+      color: #0a0a1a;
+    }
+    .badge-stock.out-of-stock {
+      background: #4b4b5e;
+      color: #e0e0e0;
+    }
+    .filter-btn {
+      position: relative;
+      transition: all 0.5s ease;
+      border-radius: 9999px;
+      padding: 0.5rem 1rem;
+      background: #2a2a3e;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid #00f7ff;
+    }
+    .filter-btn:hover {
+      background: #3a3a4e;
+      box-shadow: 0 0 10px #00f7ff;
+    }
+    .filter-btn.active {
+      background: #00f7ff;
+      color: #0a0a1a;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px #00f7ff, 0 0 30px #ff00ff;
+    }
+    .filter-btn.active .filter-check {
+      display: inline-block;
+    }
+    .filter-check {
+      display: none;
+    }
+    .filter-count {
+      position: absolute;
+      top: -0.5rem;
+      right: -0.5rem;
+      background: #ff00ff;
+      color: #0a0a1a;
+      border-radius: 9999px;
+      padding: 0.1rem 0.5rem;
+      font-size: 0.75rem;
+      transition: opacity 0.3s ease;
+    }
+    .range-slider {
+      accent-color: #00f7ff;
+      height: 6px;
+      border-radius: 5px;
+    }
+    .price-range-container {
+      position: relative;
+    }
+    .price-range-fill {
+      position: absolute;
+      height: 6px;
+      background: #00f7ff;
+      border-radius: 5px;
+      z-index: 0;
+      box-shadow: 0 0 10px #00f7ff;
+    }
+    .price-display {
+      background: #2a2a3e;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      color: #00f7ff;
+      border: 1px solid #00f7ff;
+    }
+    .cart-item {
+      animation: slideInCart 0.5s ease-in;
+    }
+    @keyframes slideInCart {
+      from { opacity: 0; transform: translateX(-50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .cart-item.fade-out {
+      animation: slideOutCart 0.5s ease-out forwards;
+    }
+    @keyframes slideOutCart {
+      to { opacity: 0; transform: translateX(50px); }
+    }
+    .cart-modal {
+      animation: zoomInCart 0.5s ease-out;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+    @keyframes zoomInCart {
+      from { transform: scale(0.5) rotateX(-30deg); opacity: 0; }
+      to { transform: scale(1) rotateX(0deg); opacity: 1; }
+    }
+    .cart-modal-exit {
+      animation: zoomOutCart 0.5s ease-out forwards;
+    }
+    @keyframes zoomOutCart {
+      to { transform: scale(0.5) rotateX(30deg); opacity: 0; }
+    }
+    .btn {
+      transition: all 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, #00f7ff, transparent);
+      transition: 0.5s;
+    }
+    .btn:hover::before {
+      left: 100%;
+    }
+    .btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px #00f7ff, 0 0 30px #ff00ff;
+    }
+    .clear-btn:hover {
+      background: linear-gradient(135deg, #00f7ff, #ff00ff);
+      box-shadow: 0 0 20px #00f7ff;
+    }
+    .footer-input {
+      transition: all 0.3s ease;
+    }
+    .footer-input:focus {
+      border-color: #00f7ff;
+      box-shadow: 0 0 10px #00f7ff;
+    }
+    .theme-toggle {
+      transition: all 0.5s ease;
+    }
+    .theme-toggle:hover {
+      transform: rotate(360deg);
+      text-shadow: 0 0 10px #00f7ff;
+    }
+    .loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeOutLoader 1s ease-in-out forwards;
+      animation-delay: 1s;
+    }
+    .loader::before {
+      content: 'Cargando...';
+      color: #00f7ff;
+      font-size: 1.5rem;
+      text-shadow: 0 0 10px #00f7ff;
+      animation: pulseText 1s infinite;
+    }
+    @keyframes fadeOutLoader {
+      to { opacity: 0; visibility: hidden; }
+    }
+    @keyframes pulseText {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body class="relative">
+  <!-- Loader -->
+  <div class="loader"></div>
+
+  <!-- Fondo de partículas -->
+  <canvas id="particles"></canvas>
+
+  <!-- Header -->
+  <header class="bg-dark shadow-md sticky top-0 z-50 transition-all duration-500">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center">
+        <img src="https://picsum.photos/50/50?random=1" alt="Logo" class="h-10 mr-2 rounded-full border-neon">
+        <h1 class="text-2xl font-bold text-neon">Smartphone Store</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Mini Menú -->
+        <div class="relative dropdown">
+          <button class="bg-dark text-neon px-4 py-2 rounded border-neon hover:glow btn">
+            Categorías <i class="fas fa-chevron-down ml-2"></i>
+          </button>
+          <div class="dropdown-menu absolute rounded-lg mt-2 w-48">
+            <button class="category-btn block px-4 py-2 text-neon hover:bg-dark w-full text-left" data-brand="all">Todos</button>
+            <button class="category-btn block px-4 py-2 text-neon hover:bg-dark w-full text-left" data-brand="Apple">Apple</button>
+            <button class="category-btn block px-4 py-2 text-neon hover:bg-dark w-full text-left" data-brand="Samsung">Samsung</button>
+            <button class="category-btn block px-4 py-2 text-neon hover:bg-dark w-full text-left" data-brand="Xiaomi">Xiaomi</button>
+            <button class="category-btn block px-4 py-2 text-neon hover:bg-dark w-full text-left" data-brand="OnePlus">OnePlus</button>
+          </div>
+        </div>
+        <!-- Carrito -->
+        <div class="relative">
+          <button id="cart-toggle" class="relative">
+            <i class="fas fa-shopping-cart text-2xl text-neon"></i>
+            <span id="cart-count" class="absolute -top-2 -right-2 bg-dark text-neon rounded-full px-2 py-1 text-xs border-neon">0</span>
+          </button>
+        </div>
+        <!-- Toggle Tema -->
+        <button id="theme-toggle" class="theme-toggle text-2xl text-neon">
+          <i class="fas fa-robot"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8 flex-1">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Filtros -->
+      <div class="lg:col-span-1">
+        <div class="bg-dark p-6 rounded-lg shadow-lg border-neon">
+          <h2 class="text-xl font-bold mb-4 text-neon">Filtros</h2>
+          <!-- Búsqueda -->
+          <div class="mb-4">
+            <input type="text" id="search-input" placeholder="Buscar por nombre..." class="w-full p-2 border rounded-lg focus:outline-none focus:border-neon bg-dark text-neon">
+          </div>
+          <!-- Marca -->
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold mb-2 text-neon">Marca</h3>
+            <div id="brand-filters" class="flex flex-wrap gap-2"></div>
+          </div>
+          <!-- Almacenamiento -->
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold mb-2 text-neon">Almacenamiento</h3>
+            <div id="storage-filters" class="flex flex-wrap gap-2"></div>
+          </div>
+          <!-- Rango de Precio -->
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold mb-2 text-neon">Rango de Precio (USD)</h3>
+            <div class="flex items-center gap-4 mb-4">
+              <span id="price-min-display" class="price-display">$0</span>
+              <span class="text-neon">-</span>
+              <span id="price-max-display" class="price-display">$2000</span>
+            </div>
+            <div class="price-range-container">
+              <div id="price-range-fill" class="price-range-fill"></div>
+              <input type="range" id="price-min" min="0" max="2000" value="0" step="10" class="range-slider w-full relative z-10">
+              <input type="range" id="price-max" min="0" max="2000" value="2000" step="10" class="range-slider w-full relative z-10">
+            </div>
+          </div>
+          <!-- Disponibilidad -->
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold mb-2 text-neon">Disponibilidad</h3>
+            <div class="flex flex-wrap gap-2">
+              <button id="availability-in-stock" class="filter-btn">
+                En Stock <span class="filter-check fas fa-check"></span>
+                <span class="filter-count opacity-0">0</span>
+              </button>
+              <button id="availability-out-of-stock" class="filter-btn">
+                Agotado <span class="filter-check fas fa-check"></span>
+                <span class="filter-count opacity-0">0</span>
+              </button>
+            </div>
+          </div>
+          <!-- Ordenamiento -->
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold mb-2 text-neon">Ordenar por</h3>
+            <select id="sort-select" class="w-full p-2 border rounded-lg focus:outline-none focus:border-neon bg-dark text-neon">
+              <option value="">Seleccionar</option>
+              <option value="price-asc">Precio: Bajo a Alto</option>
+              <option value="price-desc">Precio: Alto a Bajo</option>
+              <option value="rating">Calificación</option>
+            </select>
+          </div>
+          <button id="clear-filters" class="mt-4 bg-dark text-neon px-4 py-2 rounded border-neon hover:glow w-full btn">Limpiar Filtros</button>
+        </div>
+      </div>
+      <!-- Product Grid -->
+      <div class="lg:col-span-3">
+        <p class="text-neon mb-4">Resultados: <span id="result-count">0</span></p>
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Cart Modal -->
+  <div id="cart-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-50">
+    <div class="bg-dark p-6 rounded-lg max-w-2xl w-full cart-modal border-neon">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-neon">Tu Carrito</h2>
+        <button id="close-cart" class="text-neon hover:text-neon-magenta"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="cart-items" class="max-h-96 overflow-y-auto mb-4"></div>
+      <div class="mb-4">
+        <p class="flex justify-between text-lg"><span class="text-neon">Subtotal:</span> <span id="cart-subtotal" class="text-neon-magenta">$0.00</span></p>
+        <p class="flex justify-between text-lg"><span class="text-neon">Impuestos (10%):</span> <span id="cart-taxes" class="text-neon-magenta">$0.00</span></p>
+        <p class="flex justify-between text-lg"><span class="text-neon">Envío:</span> <span id="cart-shipping" class="text-neon-magenta">$10.00</span></p>
+        <p class="flex justify-between text-lg font-bold"><span class="text-neon">Total:</span> <span id="cart-total" class="text-neon-magenta">$0.00</span></p>
+      </div>
+      <div class="flex justify-between items-center mb-4">
+        <button id="clear-cart" class="bg-dark text-neon px-4 py-2 rounded border-neon hover:glow btn">Vaciar Carrito</button>
+        <button id="checkout-btn" class="bg-dark text-neon px-4 py-2 rounded border-neon hover:glow btn">Finalizar Compra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-neon p-8 mt-8">
+    <div class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div>
+        <h3 class="text-xl font-bold mb-4 text-neon">Sobre Nosotros</h3>
+        <p class="text-neon">Tu tienda futurista para smartphones de última generación.</p>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold mb-4 text-neon">Enlaces Rápidos</h3>
+        <ul class="text-neon space-y-2">
+          <li><a href="#home" class="hover:text-neon-magenta transition">Inicio</a></li>
+          <li><a href="#products" class="hover:text-neon-magenta transition">Productos</a></li>
+          <li><a href="#contact" class="hover:text-neon-magenta transition">Contacto</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold mb-4 text-neon">Suscríbete</h3>
+        <p class="text-neon mb-4">Recibe las últimas ofertas.</p>
+        <div class="flex gap-2">
+          <input type="email" id="subscribe-email" placeholder="Tu correo electrónico" class="footer-input p-2 border rounded w-full bg-dark text-neon border-neon">
+          <button id="subscribe-btn" class="bg-dark text-neon px-4 py-2 rounded border-neon hover:glow btn">Suscribirse</button>
+        </div>
+        <div class="mt-4 flex gap-4">
+          <a href="#facebook" class="text-neon hover:text-neon-magenta transition"><i class="fab fa-facebook-f"></i></a>
+          <a href="#twitter" class="text-neon hover:text-neon-magenta transition"><i class="fab fa-twitter"></i></a>
+          <a href="#instagram" class="text-neon hover:text-neon-magenta transition"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="mt-8 text-center text-neon">
+      <p>© 2025 Smartphone Store. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Animación de partículas
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particlesArray = [];
+    const numberOfParticles = 100;
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = Math.random() * 1 - 0.5;
+        this.speedY = Math.random() * 1 - 0.5;
+        this.color = Math.random() > 0.5 ? '#00f7ff' : '#ff00ff';
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+      }
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function initParticles() {
+      for (let i = 0; i < numberOfParticles; i++) {
+        particlesArray.push(new Particle());
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < particlesArray.length; i++) {
+        particlesArray[i].update();
+        particlesArray[i].draw();
+        for (let j = i; j < particlesArray.length; j++) {
+          const dx = particlesArray[i].x - particlesArray[j].x;
+          const dy = particlesArray[i].y - particlesArray[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.strokeStyle = particlesArray[i].color;
+            ctx.lineWidth = 0.2;
+            ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+            ctx.lineTo(particlesArray[j].x, particlesArray[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(animateParticles);
+    }
+
+    initParticles();
+    animateParticles();
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // Datos de productos (sin Google)
+    const smartphones = [
+      { id: 1, name: "iPhone 14 Pro", brand: "Apple", price: 999, discount: 10, storage: "256GB", rating: 4.8, inStock: true, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-14-pro-model-unselect-gallery-2-202209_GEO_US?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1663790645911" },
+      { id: 2, name: "iPhone 14", brand: "Apple", price: 799, discount: 0, storage: "128GB", rating: 4.6, inStock: true, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-14-model-unselect-gallery-2-202209_GEO_US?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1663790645909" },
+      { id: 3, name: "iPhone 13", brand: "Apple", price: 699, discount: 15, storage: "128GB", rating: 4.5, inStock: true, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-13-model-unselect-gallery-2-202109?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1629842709000" },
+      { id: 4, name: "iPhone 15 Pro Max", brand: "Apple", price: 1299, discount: 0, storage: "512GB", rating: 4.9, inStock: true, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-max-black-titanium-202309?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1692913914768" },
+      { id: 5, name: "iPhone 12", brand: "Apple", price: 599, discount: 20, storage: "64GB", rating: 4.3, inStock: true, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-12-purple-202104?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1617926456000" },
+      { id: 6, name: "iPhone SE (2022)", brand: "Apple", price: 429, discount: 0, storage: "64GB", rating: 4.1, inStock: true, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-se-starlight-202203?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1645551493211" },
+      { id: 7, name: "iPhone 15", brand: "Apple", price: 899, discount: 0, storage: "128GB", rating: 4.8, inStock: true, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-black-202309?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1692913914768" },
+      { id: 8, name: "iPhone 13 Pro", brand: "Apple", price: 899, discount: 10, storage: "256GB", rating: 4.7, inStock: false, image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-13-pro-sierra-blue-202109?wid=5120&hei=2880&fmt=p-jpg&qlt=80&.v=1629842712000" },
+      { id: 9, name: "Galaxy S23 Ultra", brand: "Samsung", price: 1199, discount: 5, storage: "512GB", rating: 4.9, inStock: true, image: "https://images.samsung.com/is/image/samsung/p6pim/us/2302/gallery/us-galaxy-s23-s918-446704-sm-s918bzekxau-534855662?$1300_1038_PNG$" },
+      { id: 10, name: "Galaxy S23", brand: "Samsung", price: 799, discount: 0, storage: "256GB", rating: 4.7, inStock: true, image: "https://images.samsung.com/is/image/samsung/p6pim/us/2302/gallery/us-galaxy-s23-s911-446701-sm-s911bzekxau-534855659?$1300_1038_PNG$" },
+      { id: 11, name: "Galaxy Z Fold 5", brand: "Samsung", price: 1799, discount: 10, storage: "512GB", rating: 4.8, inStock: false, image: "https://images.samsung.com/is/image/samsung/p6pim/us/2307/gallery/us-galaxy-z-fold5-f946-449955-sm-f946uzkaxaa-536947366?$1300_1038_PNG$" },
+      { id: 12, name: "Galaxy S22", brand: "Samsung", price: 699, discount: 15, storage: "128GB", rating: 4.4, inStock: true, image: "https://images.samsung.com/is/image/samsung/p6pim/us/2202/gallery/us-galaxy-s22-s901-413892-sm-s901uzgaxaa-531189374?$1300_1038_PNG$" },
+      { id: 13, name: "Galaxy A54", brand: "Samsung", price: 449, discount: 5, storage: "128GB", rating: 4.3, inStock: true, image: "https://images.samsung.com/is/image/samsung/p6pim/us/2303/gallery/us-galaxy-a54-5g-a546-451843-sm-a546uzkbxaa-535706084?$1300_1038_PNG$" },
+      { id: 14, name: "Galaxy Z Flip 5", brand: "Samsung", price: 999, discount: 5, storage: "256GB", rating: 4.6, inStock: true, image: "https://images.samsung.com/is/image/samsung/p6pim/us/2307/gallery/us-galaxy-z-flip5-f731-449952-sm-f731uzgaxaa-536947363?$1300_1038_PNG$" },
+      { id: 15, name: "Galaxy S21 FE", brand: "Samsung", price: 599, discount: 10, storage: "128GB", rating: 4.3, inStock: true, image: "https://images.samsung.com/is/image/samsung/p6pim/us/2201/gallery/us-galaxy-s21-fe-g990-410670-sm-g990uzgaxaa-531176680?$1300_1038_PNG$" },
+      { id: 16, name: "Galaxy A34", brand: "Samsung", price: 349, discount: 0, storage: "128GB", rating: 4.2, inStock: true, image: "https://images.samsung.com/is/image/samsung/p6pim/ae/feature/ae-feature-galaxy-a34-5g-534855656?$1300_1038_PNG$" },
+      { id: 25, name: "Xiaomi 14 Pro", brand: "Xiaomi", price: 899, discount: 5, storage: "256GB", rating: 4.7, inStock: true, image: "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1698119136.55218978!720x720.jpg" },
+      { id: 26, name: "Xiaomi 13T", brand: "Xiaomi", price: 649, discount: 0, storage: "256GB", rating: 4.5, inStock: true, image: "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1695796807.73244117!720x720.jpg" },
+      { id: 27, name: "Redmi Note 12 Pro", brand: "Xiaomi", price: 399, discount: 10, storage: "128GB", rating: 4.4, inStock: true, image: "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1678867637.40558692!720x720.jpg" },
+      { id: 28, name: "Xiaomi 14", brand: "Xiaomi", price: 799, discount: 0, storage: "256GB", rating: 4.6, inStock: true, image: "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1698119136.55218978!720x720.jpg" },
+      { id: 29, name: "Redmi K60", brand: "Xiaomi", price: 549, discount: 5, storage: "256GB", rating: 4.5, inStock: false, image: "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1672216837.58637218!720x720.jpg" },
+      { id: 30, name: "Xiaomi 12S Ultra", brand: "Xiaomi", price: 999, discount: 15, storage: "512GB", rating: 4.8, inStock: true, image: "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1657016837.58637218!720x720.jpg" },
+      { id: 31, name: "Redmi Note 11", brand: "Xiaomi", price: 299, discount: 5, storage: "64GB", rating: 4.2, inStock: true, image: "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1637226837.58637218!720x720.jpg" },
+      { id: 32, name: "OnePlus 11", brand: "OnePlus", price: 799, discount: 5, storage: "256GB", rating: 4.7, inStock: true, image: "https://oasis.opstatics.com/content/dam/oasis/page/2023/na/oneplus-11/launch/kv_1440.png" },
+      { id: 33, name: "OnePlus 10 Pro", brand: "OnePlus", price: 699, discount: 10, storage: "128GB", rating: 4.6, inStock: true, image: "https://oasis.opstatics.com/content/dam/oasis/page/2022/na/oneplus-10-pro/launch/kv_1440.jpg" },
+      { id: 34, name: "OnePlus Nord 3", brand: "OnePlus", price: 499, discount: 0, storage: "128GB", rating: 4.4, inStock: true, image: "https://oasis.opstatics.com/content/dam/oasis/page/2023/na/nord-3/launch/kv_1440.jpg" },
+      { id: 35, name: "OnePlus Ace 2", brand: "OnePlus", price: 599, discount: 5, storage: "256GB", rating: 4.5, inStock: true, image: "https://oasis.opstatics.com/content/dam/oasis/page/2023/na/ace-2/launch/kv_1440.jpg" },
+      { id: 36, name: "OnePlus 9", brand: "OnePlus", price: 599, discount: 15, storage: "128GB", rating: 4.4, inStock: false, image: "https://oasis.opstatics.com/content/dam/oasis/page/2021/na/oneplus-9/launch/kv_1440.jpg" },
+      { id: 37, name: "OnePlus Nord CE 3", brand: "OnePlus", price: 399, discount: 0, storage: "128GB", rating: 4.3, inStock: true, image: "https://oasis.opstatics.com/content/dam/oasis/page/2023/na/nord-ce-3/launch/kv_1440.jpg" },
+      { id: 38, name: "OnePlus 10T", brand: "OnePlus", price: 649, discount: 5, storage: "256GB", rating: 4.5, inStock: true, image: "https://oasis.opstatics.com/content/dam/oasis/page/2022/na/oneplus-10t/launch/kv_1440.jpg" },
+      { id: 39, name: "OnePlus Nord 2T", brand: "OnePlus", price: 449, discount: 0, storage: "128GB", rating: 4.3, inStock: true, image: "https://oasis.opstatics.com/content/dam/oasis/page/2022/na/nord-2t/launch/kv_1440.jpg" },
+    ];
+
+    const productGrid = document.getElementById('product-grid');
+    const searchInput = document.getElementById('search-input');
+    const brandFilters = document.getElementById('brand-filters');
+    const storageFilters = document.getElementById('storage-filters');
+    const priceMinSlider = document.getElementById('price-min');
+    const priceMaxSlider = document.getElementById('price-max');
+    const priceMinDisplay = document.getElementById('price-min-display');
+    const priceMaxDisplay = document.getElementById('price-max-display');
+    const priceRangeFill = document.getElementById('price-range-fill');
+    const availabilityInStock = document.getElementById('availability-in-stock');
+    const availabilityOutOfStock = document.getElementById('availability-out-of-stock');
+    const sortSelect = document.getElementById('sort-select');
+    const resultCount = document.getElementById('result-count');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const cartToggle = document.getElementById('cart-toggle');
+    const cartModal = document.getElementById('cart-modal');
+    const closeCartBtn = document.getElementById('close-cart');
+    const cartItemsContainer = document.getElementById('cart-items');
+    const cartCount = document.getElementById('cart-count');
+    const cartSubtotal = document.getElementById('cart-subtotal');
+    const cartTaxes = document.getElementById('cart-taxes');
+    const cartShipping = document.getElementById('cart-shipping');
+    const cartTotal = document.getElementById('cart-total');
+    const clearCartBtn = document.getElementById('clear-cart');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const themeToggle = document.getElementById('theme-toggle');
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const subscribeBtn = document.getElementById('subscribe-btn');
+    const subscribeEmail = document.getElementById('subscribe-email');
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    let filters = {
+      search: '',
+      brands: [],
+      storage: [],
+      priceMin: 0,
+      priceMax: 2000,
+      inStock: true,
+      outOfStock: true,
+      sort: ''
+    };
+
+    // Generar filtros de marca y almacenamiento
+    const brands = [...new Set(smartphones.map(p => p.brand))];
+    const storages = [...new Set(smartphones.map(p => p.storage))];
+
+    brands.forEach(brand => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.innerHTML = `${brand} <span class="filter-check fas fa-check"></span><span class="filter-count opacity-0">0</span>`;
+      btn.addEventListener('click', () => toggleFilter('brands', brand, btn));
+      brandFilters.appendChild(btn);
+    });
+
+    storages.forEach(storage => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.innerHTML = `${storage} <span class="filter-check fas fa-check"></span><span class="filter-count opacity-0">0</span>`;
+      btn.addEventListener('click', () => toggleFilter('storage', storage, btn));
+      storageFilters.appendChild(btn);
+    });
+
+    // Filtros y ordenamiento
+    function toggleFilter(type, value, button) {
+      const filterArray = filters[type];
+      const index = filterArray.indexOf(value);
+      if (index === -1) {
+        filterArray.push(value);
+        button.classList.add('active');
+      } else {
+        filterArray.splice(index, 1);
+        button.classList.remove('active');
+      }
+      applyFilters();
+    }
+
+    searchInput.addEventListener('input', () => {
+      filters.search = searchInput.value.toLowerCase();
+      applyFilters();
+    });
+
+    priceMinSlider.addEventListener('input', () => {
+      filters.priceMin = parseInt(priceMinSlider.value);
+      if (filters.priceMin > filters.priceMax) {
+        filters.priceMin = filters.priceMax;
+        priceMinSlider.value = filters.priceMin;
+      }
+      updatePriceRange();
+      applyFilters();
+    });
+
+    priceMaxSlider.addEventListener('input', () => {
+      filters.priceMax = parseInt(priceMaxSlider.value);
+      if (filters.priceMax < filters.priceMin) {
+        filters.priceMax = filters.priceMin;
+        priceMaxSlider.value = filters.priceMax;
+      }
+      updatePriceRange();
+      applyFilters();
+    });
+
+    function updatePriceRange() {
+      priceMinDisplay.textContent = `$${filters.priceMin}`;
+      priceMaxDisplay.textContent = `$${filters.priceMax}`;
+      const minPercent = (filters.priceMin / 2000) * 100;
+      const maxPercent = (filters.priceMax / 2000) * 100;
+      priceRangeFill.style.left = `${minPercent}%`;
+      priceRangeFill.style.width = `${maxPercent - minPercent}%`;
+    }
+
+    availabilityInStock.addEventListener('click', () => {
+      filters.inStock = !filters.inStock;
+      availabilityInStock.classList.toggle('active');
+      applyFilters();
+    });
+
+    availabilityOutOfStock.addEventListener('click', () => {
+      filters.outOfStock = !filters.outOfStock;
+      availabilityOutOfStock.classList.toggle('active');
+      applyFilters();
+    });
+
+    sortSelect.addEventListener('change', () => {
+      filters.sort = sortSelect.value;
+      applyFilters();
+    });
+
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const brand = btn.dataset.brand;
+        filters.brands = brand === 'all' ? [] : [brand];
+        const brandFilterButtons = brandFilters.querySelectorAll('.filter-btn');
+        brandFilterButtons.forEach(b => {
+          b.classList.toggle('active', filters.brands.includes(b.textContent.split(' ')[0]));
+        });
+        applyFilters();
+      });
+    });
+
+    clearFiltersBtn.addEventListener('click', () => {
+      filters = {
+        search: '',
+        brands: [],
+        storage: [],
+        priceMin: 0,
+        priceMax: 2000,
+        inStock: true,
+        outOfStock: true,
+        sort: ''
+      };
+      searchInput.value = '';
+      brandFilters.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      storageFilters.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      priceMinSlider.value = 0;
+      priceMaxSlider.value = 2000;
+      availabilityInStock.classList.add('active');
+      availabilityOutOfStock.classList.add('active');
+      sortSelect.value = '';
+      filters.inStock = true;
+      filters.outOfStock = true;
+      updatePriceRange();
+      applyFilters();
+    });
+
+    function applyFilters() {
+      let filteredProducts = smartphones.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(filters.search);
+        const matchesBrand = filters.brands.length === 0 || filters.brands.includes(product.brand);
+        const matchesStorage = filters.storage.length === 0 || filters.storage.includes(product.storage);
+        const matchesPrice = product.price >= filters.priceMin && product.price <= filters.priceMax;
+        const matchesAvailability = (filters.inStock && product.inStock) || (filters.outOfStock && !product.inStock);
+        return matchesSearch && matchesBrand && matchesStorage && matchesPrice && matchesAvailability;
+      });
+
+      if (filters.sort) {
+        filteredProducts.sort((a, b) => {
+          if (filters.sort === 'price-asc') return a.price - b.price;
+          if (filters.sort === 'price-desc') return b.price - a.price;
+          if (filters.sort === 'rating') return b.rating - a.rating;
+          return 0;
+        });
+      }
+
+      renderProducts(filteredProducts);
+      updateFilterCounts();
+    }
+
+    function renderProducts(products) {
+      productGrid.innerHTML = '';
+      products.forEach((product, index) => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.style.animationDelay = `${index * 0.1}s`;
+        const discountedPrice = product.discount ? (product.price * (1 - product.discount / 100)).toFixed(2) : product.price;
+        card.innerHTML = `
+          <div class="relative">
+            <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover">
+            ${product.discount ? `<span class="badge badge-discount">${product.discount}% OFF</span>` : ''}
+            <span class="badge badge-stock ${product.inStock ? 'in-stock' : 'out-of-stock'}">${product.inStock ? 'En Stock' : 'Agotado'}</span>
+          </div>
+          <div class="p-4">
+            <h3 class="text-lg font-semibold text-neon">${product.name}</h3>
+            <p class="text-sm text-neon-magenta">${product.brand} • ${product.storage}</p>
+            <div class="flex items-center gap-1 mt-1">
+              <span class="text-neon">${'★'.repeat(Math.round(product.rating))}${'☆'.repeat(5 - Math.round(product.rating))}</span>
+              <span class="text-neon-magenta">(${product.rating})</span>
+            </div>
+            <p class="mt-2">
+              <span class="text-lg font-bold text-neon-magenta">$${discountedPrice}</span>
+              ${product.discount ? `<span class="text-sm line-through text-gray-400 ml-2">$${product.price}</span>` : ''}
+            </p>
+            <button class="add-to-cart-btn mt-4 bg-dark text-neon px-4 py-2 rounded border-neon hover:glow w-full btn" data-id="${product.id}">
+              ${product.inStock ? 'Agregar al Carrito' : 'Sin Stock'}
+            </button>
+          </div>
+        `;
+        productGrid.appendChild(card);
+      });
+      resultCount.textContent = products.length;
+
+      document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const productId = parseInt(btn.dataset.id);
+          const product = smartphones.find(p => p.id === productId);
+          if (product.inStock) addToCart(product);
+        });
+      });
+    }
+
+    function updateFilterCounts() {
+      const brandCounts = {};
+      const storageCounts = {};
+      const inStockCount = smartphones.filter(p => p.inStock).length;
+      const outOfStockCount = smartphones.length - inStockCount;
+
+      smartphones.forEach(product => {
+        brandCounts[product.brand] = (brandCounts[product.brand] || 0) + 1;
+        storageCounts[product.storage] = (storageCounts[product.storage] || 0) + 1;
+      });
+
+      brandFilters.querySelectorAll('.filter-btn').forEach(btn => {
+        const brand = btn.textContent.split(' ')[0];
+        const count = brandCounts[brand] || 0;
+        btn.querySelector('.filter-count').textContent = count;
+        btn.querySelector('.filter-count').style.opacity = count > 0 ? 1 : 0;
+      });
+
+      storageFilters.querySelectorAll('.filter-btn').forEach(btn => {
+        const storage = btn.textContent.split(' ')[0];
+        const count = storageCounts[storage] || 0;
+        btn.querySelector('.filter-count').textContent = count;
+        btn.querySelector('.filter-count').style.opacity = count > 0 ? 1 : 0;
+      });
+
+      availabilityInStock.querySelector('.filter-count').textContent = inStockCount;
+      availabilityInStock.querySelector('.filter-count').style.opacity = inStockCount > 0 ? 1 : 0;
+      availabilityOutOfStock.querySelector('.filter-count').textContent = outOfStockCount;
+      availabilityOutOfStock.querySelector('.filter-count').style.opacity = outOfStockCount > 0 ? 1 : 0;
+    }
+
+    // Carrito
+    function addToCart(product) {
+      const cartItem = cart.find(item => item.id === product.id);
+      if (cartItem) {
+        cartItem.quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    function removeFromCart(productId) {
+      const cartItem = cartItemsContainer.querySelector(`[data-id="${productId}"]`);
+      if (cartItem) {
+        cartItem.classList.add('fade-out');
+        cartItem.addEventListener('animationend', () => {
+          cart = cart.filter(item => item.id !== productId);
+          localStorage.setItem('cart', JSON.stringify(cart));
+          renderCart();
+        });
+      }
+    }
+
+    function updateCartItemQuantity(productId, delta) {
+      const cartItem = cart.find(item => item.id === productId);
+      if (cartItem) {
+        cartItem.quantity += delta;
+        if (cartItem.quantity <= 0) {
+          removeFromCart(productId);
+        } else {
+          localStorage.setItem('cart', JSON.stringify(cart));
+          renderCart();
+        }
+      }
+    }
+
+    function renderCart() {
+      cartItemsContainer.innerHTML = '';
+      let subtotal = 0;
+
+      cart.forEach(item => {
+        const discountedPrice = item.discount ? (item.price * (1 - item.discount / 100)) : item.price;
+        const itemTotal = discountedPrice * item.quantity;
+        subtotal += itemTotal;
+
+        const cartItem = document.createElement('div');
+        cartItem.className = 'cart-item flex justify-between items-center p-4 border-b border-neon';
+        cartItem.dataset.id = item.id;
+        cartItem.innerHTML = `
+          <div class="flex items-center gap-4">
+            <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded border-neon">
+            <div>
+              <h3 class="text-neon">${item.name}</h3>
+              <p class="text-neon-magenta">$${discountedPrice.toFixed(2)} x ${item.quantity}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="decrement-btn bg-dark text-neon px-2 py-1 rounded border-neon hover:glow btn">-</button>
+            <span class="text-neon">${item.quantity}</span>
+            <button class="increment-btn bg-dark text-neon px-2 py-1 rounded border-neon hover:glow btn">+</button>
+            <button class="remove-btn bg-dark text-neon px-2 py-1 rounded border-neon hover:glow btn"><i class="fas fa-trash"></i></button>
+          </div>
+        `;
+        cartItemsContainer.appendChild(cartItem);
+
+        cartItem.querySelector('.increment-btn').addEventListener('click', () => updateCartItemQuantity(item.id, 1));
+        cartItem.querySelector('.decrement-btn').addEventListener('click', () => updateCartItemQuantity(item.id, -1));
+        cartItem.querySelector('.remove-btn').addEventListener('click', () => removeFromCart(item.id));
+      });
+
+      const taxes = subtotal * 0.1;
+      const shipping = 10;
+      const total = subtotal + taxes + shipping;
+
+      cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+      cartTaxes.textContent = `$${taxes.toFixed(2)}`;
+      cartShipping.textContent = `$${shipping.toFixed(2)}`;
+      cartTotal.textContent = `$${total.toFixed(2)}`;
+      cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    cartToggle.addEventListener('click', () => {
+      cartModal.classList.remove('hidden');
+    });
+
+    closeCartBtn.addEventListener('click', () => {
+      cartModal.classList.add('cart-modal-exit');
+      cartModal.addEventListener('animationend', () => {
+        cartModal.classList.add('hidden');
+        cartModal.classList.remove('cart-modal-exit');
+      }, { once: true });
+    });
+
+    clearCartBtn.addEventListener('click', () => {
+      cartItemsContainer.querySelectorAll('.cart-item').forEach(item => {
+        item.classList.add('fade-out');
+      });
+      cartItemsContainer.addEventListener('animationend', () => {
+        cart = [];
+        localStorage.setItem('cart', JSON.stringify(cart));
+        renderCart();
+      }, { once: true });
+    });
+
+    checkoutBtn.addEventListener('click', () => {
+      alert('¡Gracias por tu compra! Tu pedido ha sido procesado.');
+      cart = [];
+      localStorage.setItem('cart', JSON.stringify(cart));
+      renderCart();
+      cartModal.classList.add('cart-modal-exit');
+      cartModal.addEventListener('animationend', () => {
+        cartModal.classList.add('hidden');
+        cartModal.classList.remove('cart-modal-exit');
+      }, { once: true });
+    });
+
+    // Toggle Tema
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('theme-classic');
+      const isClassic = document.body.classList.contains('theme-classic');
+      themeToggle.innerHTML = `<i class="fas ${isClassic ? 'fa-robot' : 'fa-sun'}"></i>`;
+    });
+
+    // Suscripción
+    subscribeBtn.addEventListener('click', () => {
+      const email = subscribeEmail.value;
+      if (email) {
+        alert(`¡Gracias por suscribirte, ${email}!`);
+        subscribeEmail.value = '';
+      } else {
+        alert('Por favor, ingresa un correo electrónico.');
+      }
+    });
+
+    // Inicializar
+    renderCart();
+    applyFilters();
+    updatePriceRange();
+  </script>
+</body>
+</html>
